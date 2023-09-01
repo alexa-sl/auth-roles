@@ -2,30 +2,26 @@ const User = require('./models/User');
 const Role = require('./models/Role');
 const bcrypt = require('bcryptjs');
 const {validationResult} = require('express-validator');
-const jwt = require('jsonwebtoken');
-const {secret} = require('./config');
+const tokenService = require('./service/token-service');
+const UserDto = require('./dtos/user-dto');
+const userService = require('./service/user-service');
+const ApiErrors = require('./exeptions/api-error');
 
-const generateAccessToken = (id, roles) => {
-    const payload = {
-      id,
-      roles
-    };
-
-    return jwt.sign(payload, secret, {expiresIn: '24h'});
-};
 class authController {
-    async registration (req, res) {
+    async registration (req, res, next) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(400).json({message: 'Ошибка валидации', errors});
+                return next(ApiErrors.BadRequest('Ошибка валидации', errors.array()));
             }
 
             const {username, password} = req.body;
             const candidate = await User.findOne({username});
 
             if (candidate) {
-                res.status(400).json({message: 'Пользователь с таким именем уже существует'});
+                res.status(400).send({
+                    errors: {errors: [{"msg": "Пользователь с таким именем уже существует"}]}
+                });
             }
 
             const salt = bcrypt.genSaltSync(7);
@@ -37,42 +33,66 @@ class authController {
                 roles: [userRole.value]
             });
 
-            await user.save();
-            return res.json({message: 'Пользователь создан!'});
+            const userDto = new UserDto(user); // username; _id; roles
+            const tokens = tokenService.generateTokens({...userDto});
+
+            await tokenService.saveToken(userDto.id, tokens.refreshToken, userDto.roles);
+            // res.cookie('refreshToken', tokens.refreshToken, {maxAge: 30*1000, httpOnly: true});
+            res.cookie('refreshToken', tokens.refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true});
+
+            user.save();
+            return res.status(200).json({
+                message: 'CREATED!!!',
+                ...tokens,
+                user: userDto
+            });
         } catch (e) {
-            console.log(e);
-            res.status(400).json({message: 'Registration error!'});
+            next(e);
         }
     }
-    async login (req, res) {
+    async login (req, res, next) {
         try {
             const {username, password} = req.body;
-            const user = await User.findOne({username});
+            const userData = await userService.login(username, password);
+            // res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*1000, httpOnly: true});
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true});
 
-            if (!user) {
-                return res.status(404).json({message: `Пользователь ${username} не найден`});
-            }
-
-            const validPassword = bcrypt.compareSync(password, user.password);
-
-            if (!validPassword) {
-                return res.status(401).json({message: 'Неверный пароль'});
-            }
-
-            const token = generateAccessToken(user._id, user.roles);
-
-            return res.json({'token': token});
+            return res.send(userData);
         } catch (e) {
-            console.log(e);
-            res.status(400).json({message: 'Login error!'});
+            next(e);
         }
     }
-    async getUsers (req, res) {
+
+    async logout(req, res, next) {
+        try {
+            const {refreshToken} = req.cookies;
+            const token = await userService.logout(refreshToken);
+            res.clearCookie('refreshToken');
+            return res.json(token);
+        } catch (e) {
+            next(e);
+        }
+    };
+
+    async refresh(req, res, next) {
+        try {
+            const {refreshToken} = req.cookies;
+            console.log('req', refreshToken);
+            const userData = await userService.refresh(refreshToken);
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true});
+            // res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*1000, httpOnly: true});
+            return res.json(userData);
+        }   catch (e) {
+            next(e);
+        }
+    };
+
+    async getUsers (req, res, next) {
         try {
             const users = await User.find();
             res.json(users);
         } catch (e) {
-            console.log(e);
+            next(e);
         }
     }
 }

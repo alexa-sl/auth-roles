@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const {secret} = require('../config');
 
 module.exports = function(req, res, next) {
     if (req.method === 'OPTIONS') {
@@ -7,13 +6,17 @@ module.exports = function(req, res, next) {
     }
 
     try {
+        if (!req.headers ||  !req.headers.authorization ) {
+            res.status(401).json({message: 'no headers'});
+        }
+        console.log('req.headers', req.headers);
         const token = req.headers.authorization.split(' ')[1];
         console.log(token)
         if (!token) {
             res.status(401).json({message: 'Пользователь не авторизован'});
         }
 
-        req.user = jwt.verify(token, secret);
+        req.user = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
         next();
 
     } catch (e) {
