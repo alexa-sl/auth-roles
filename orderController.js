@@ -18,6 +18,7 @@ class orderController {
             });
 
             order.save();
+            res.writeHead(200, {'Content-Type': 'text/html'});
             return res.json(order);
         } catch (e) {
             next(e);
