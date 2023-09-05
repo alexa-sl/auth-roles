@@ -5,14 +5,17 @@ const {validationResult} = require('express-validator');
 const tokenService = require('./service/token-service');
 const UserDto = require('./dtos/user-dto');
 const userService = require('./service/user-service');
-const ApiErrors = require('./exeptions/api-error');
+// const ApiErrors = require('./exeptions/api-error');
 
 class authController {
     async registration (req, res, next) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return next(ApiErrors.BadRequest('Ошибка валидации', errors.array()));
+                res.status(400).send({
+                    errors
+                });
+                // return next(ApiErrors.BadRequest('Ошибка валидации', errors.array()));
             }
 
             const {username, password} = req.body;
@@ -37,7 +40,6 @@ class authController {
             const tokens = tokenService.generateTokens({...userDto});
 
             await tokenService.saveToken(userDto.id, tokens.refreshToken, userDto.roles);
-            // res.cookie('refreshToken', tokens.refreshToken, {maxAge: 30*1000, httpOnly: true});
             res.cookie('refreshToken', tokens.refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true});
 
             user.save();
@@ -52,9 +54,15 @@ class authController {
     }
     async login (req, res, next) {
         try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                res.status(400).send({
+                    errors
+                });
+                // return next(ApiErrors.BadRequest('Ошибка валидации', errors.array()));
+            }
             const {username, password} = req.body;
             const userData = await userService.login(username, password);
-            // res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*1000, httpOnly: true});
             res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true});
 
             return res.send(userData);
@@ -77,10 +85,8 @@ class authController {
     async refresh(req, res, next) {
         try {
             const {refreshToken} = req.cookies;
-            console.log('req', refreshToken);
             const userData = await userService.refresh(refreshToken);
             res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*24*60*60*1000, httpOnly: true});
-            // res.cookie('refreshToken', userData.refreshToken, {maxAge: 30*1000, httpOnly: true});
             return res.json(userData);
         }   catch (e) {
             next(e);

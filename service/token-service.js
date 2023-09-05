@@ -32,11 +32,9 @@ class TokenService {
         if (tokenData) {
             tokenData.refreshToken = refreshToken;
 
-            console.log('saveToken1');
             return tokenData.save();
         }
 
-        console.log('saveToken2', refreshToken);
         return tokenModel.create({user: userId, roles: roles, refreshToken: refreshToken});
     };
 

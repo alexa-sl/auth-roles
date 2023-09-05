@@ -3,9 +3,12 @@ const bcrypt = require('bcryptjs');
 const tokenService = require('../service/token-service');
 const ApiError = require('../exeptions/api-error');
 const UserDto = require('../dtos/user-dto');
+// const {validationResult} = require("express-validator");
+// const ApiErrors = require("../exeptions/api-error");
 
 class UserService {
     async login(username, password) {
+
         const user = await userModel.findOne({username});
         if (!user) {
             throw ApiError.BadRequest('Пользователь не найден');
@@ -27,7 +30,6 @@ class UserService {
     };
 
     async refresh(refreshToken) {
-        console.log('refreshToken on refresh', refreshToken);
         if (!refreshToken) {
             throw ApiError.UnauthorizedError();
         }

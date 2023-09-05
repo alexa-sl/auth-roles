@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const authRouter = require('./authRouter');
+const orderRouter = require('./orderRouter');
 const cookieParser = require('cookie-parser');
 const PORT = process.env.PORT || 5000;
 const errorMiddleware = require('./middleware/errorMiddleware');
@@ -26,6 +27,7 @@ app.use(
 
 app.use(express.json());
 app.use('/auth', authRouter);
+app.use('/orders', orderRouter);
 app.use(errorMiddleware);
 
 const start = async () => {
