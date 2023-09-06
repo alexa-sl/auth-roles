@@ -10,13 +10,13 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
 app.use(cookieParser());
-app.use(
-    cors({
-        credentials: true,
-        origin: process.env.FRONTEND_URL ?? "http://localhost:4200",
-        optionsSuccessStatus: 200,
-    })
-);
+// app.use(
+//     cors({
+//         credentials: true,
+//         origin: process.env.FRONTEND_URL ?? "http://localhost:4200",
+//         optionsSuccessStatus: 200,
+//     })
+// );
 // app.use(function (req, res, next) {
 //     //Enabling CORS
 //     res.header("Access-Control-Allow-Origin", "*");
@@ -24,6 +24,12 @@ app.use(
 //     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, x-client-key, x-client-token, x-client-secret, Authorization");
 //     next();
 // });
+app.all("/*", function(req, res, next){
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+    next();
+});
 
 app.use(express.json());
 app.use('/auth', authRouter);
