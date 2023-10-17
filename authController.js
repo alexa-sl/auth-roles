@@ -29,7 +29,9 @@ class authController {
 
             const salt = bcrypt.genSaltSync(7);
             const hashPass = bcrypt.hashSync(password, salt);
-            const userRole = await Role.findOne({value: 'USER'});
+            const userRole = await Role.findOne({value: 'ADMIN'});
+            // await Role.create({value: 'USER'});
+            // await Role.create({value: 'ADMIN'});
             const user = new User({
                 username,
                 password: hashPass,

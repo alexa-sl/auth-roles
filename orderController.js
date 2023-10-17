@@ -12,13 +12,12 @@ class orderController {
             }
 
             const {clientName, clientPhone} = req.body;
-            const order = new Order({
+            const order = await Order.create({
                 clientName,
                 clientPhone
             });
 
-            order.save();
-            res.writeHead(200, {'Content-Type': 'text/html'});
+            // res.writeHead(200, {'Content-Type': 'text/html'});
             return res.json(order);
         } catch (e) {
             next(e);

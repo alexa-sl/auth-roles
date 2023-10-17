@@ -17,7 +17,7 @@ router.post('/login',
     controller.login);
 router.post('/logout', controller.logout);
 router.post('/refresh', controller.refresh);
-// router.get('/users', controller.getUsers);
-router.get('/users', authMiddleware, roleMiddleware(['ADMIN']), controller.getUsers);
+router.get('/users', controller.getUsers);
+// router.get('/users', authMiddleware, roleMiddleware(['ADMIN']), controller.getUsers);
 
 module.exports = router;

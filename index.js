@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
+// const {MongoClient} = require('mongodb');
+const mongoose = require('mongoose').default;
 const authRouter = require('./authRouter');
 const orderRouter = require('./orderRouter');
 const cookieParser = require('cookie-parser');
@@ -10,13 +11,14 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
 app.use(cookieParser());
-// app.use(
-//     cors({
-//         credentials: true,
-//         origin: process.env.FRONTEND_URL ?? "http://localhost:4200",
-//         optionsSuccessStatus: 200,
-//     })
-// );
+app.use(
+    cors({
+        credentials: true,
+        origin: process.env.FRONTEND_URL ?? "http://localhost:4200",
+        // origin: "http://localhost:4200",
+        optionsSuccessStatus: 200,
+    })
+);
 // app.use(function (req, res, next) {
 //     //Enabling CORS
 //     res.header("Access-Control-Allow-Origin", "*");
@@ -36,11 +38,14 @@ app.use('/auth', authRouter);
 app.use('/orders', orderRouter);
 app.use(errorMiddleware);
 
+// const client = new MongoClient('mongodb://127.0.0.1:27017/rusprom');
+
 const start = async () => {
     try {
-        await mongoose.connect(
-            'mongodb+srv://alexa_sl:Alfa12_07@cluster0.xm8qrez.mongodb.net/?retryWrites=true&w=majority',
-            {useNewUrlParser: true, UseUnifiedTopology: true});
+        // client.connect()
+        mongoose.connect('mongodb://127.0.0.1:27017/rusprom')
+            .then(() => console.log('Connected Successfully'))
+            .catch(error => console.log('Failed to connect', error))
         app.listen(PORT, () => {
             console.log(`server started on port ${PORT}`);
         })
