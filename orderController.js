@@ -11,10 +11,11 @@ class orderController {
                 });
             }
 
-            const {clientName, clientPhone} = req.body;
+            const {clientName, clientPhone, clientOrderDate} = req.body;
             const order = await Order.create({
                 clientName,
-                clientPhone
+                clientPhone,
+                clientOrderDate
             });
 
             // res.writeHead(200, {'Content-Type': 'text/html'});
